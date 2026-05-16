@@ -53,7 +53,12 @@ export function Footer() {
 
         <div className="mt-10 pt-6 border-t border-slate-800/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
           <p>© {new Date().getFullYear()} Solergy. Energía solar inteligente para Chile.</p>
-          <p>V Región · VI Región · Región Metropolitana</p>
+          <div className="flex items-center gap-4">
+            <p>V Región · VI Región · Región Metropolitana</p>
+            <Link href="/admin" className="text-slate-700 hover:text-slate-500 transition-colors">
+              Acceso Solergy
+            </Link>
+          </div>
         </div>
       </div>
     </footer>

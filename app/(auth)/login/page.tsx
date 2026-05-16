@@ -1,14 +1,9 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Logo } from "@/components/ui/logo";
 
-const DEMO_USER = "admin@solergy.cl";
-const DEMO_PASS = "demo123";
-
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -19,19 +14,9 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     await new Promise((r) => setTimeout(r, 700));
-
-    if (email === DEMO_USER && password === DEMO_PASS) {
-      router.push("/dashboard");
-    } else {
-      setError("Credenciales incorrectas. Por favor revisa tus datos.");
-      setLoading(false);
-    }
-  };
-
-  const handleQuickAccess = async () => {
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 500));
-    router.push("/dashboard");
+    // Panel comercial requiere acceso autorizado
+    setError("Credenciales incorrectas. Por favor revisa tus datos.");
+    setLoading(false);
   };
 
   return (
@@ -99,16 +84,6 @@ export default function LoginPage() {
               ) : "Acceder al panel"}
             </button>
           </form>
-
-          <div className="mt-4 pt-4 border-t border-slate-800">
-            <button
-              onClick={handleQuickAccess}
-              disabled={loading}
-              className="w-full btn-outline py-3 rounded-xl text-sm font-medium disabled:opacity-50"
-            >
-              Acceso rápido a demo →
-            </button>
-          </div>
         </div>
 
         <div className="mt-6 text-center">
