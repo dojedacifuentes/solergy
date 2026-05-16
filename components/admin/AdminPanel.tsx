@@ -3,19 +3,13 @@ import { useState, useRef } from "react";
 import { useLeads, type AdminLead, type LeadStatus } from "@/lib/hooks/useLeads";
 import { useCompanyConfig } from "@/lib/hooks/useCompanyConfig";
 import { COMPANY_CONFIG_DEFAULTS } from "@/lib/config";
-import { formatCLP } from "@/lib/utils";
+import { AdminDashboard } from "./AdminDashboard";
+import { LeadTable, STATUS_CONFIG } from "./LeadTable";
+import { OpportunityCenter } from "./OpportunityCenter";
+import { LeadDrawer } from "./LeadDrawer";
+import { Sun } from "lucide-react";
 
-type Tab = "leads" | "config" | "datos";
-
-const STATUS_CONFIG: Record<LeadStatus, { label: string; classes: string }> = {
-  nuevo: { label: "Nuevo", classes: "bg-blue-500/20 text-blue-300 border-blue-500/30" },
-  contactado: { label: "Contactado", classes: "bg-amber-500/20 text-amber-300 border-amber-500/30" },
-  evaluando: { label: "Evaluando", classes: "bg-orange-500/20 text-orange-300 border-orange-500/30" },
-  propuesta_enviada: { label: "Propuesta enviada", classes: "bg-purple-500/20 text-purple-300 border-purple-500/30" },
-  seguimiento: { label: "Seguimiento", classes: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30" },
-  cerrado: { label: "Cerrado", classes: "bg-green-500/20 text-green-300 border-green-500/30" },
-  perdido: { label: "Perdido", classes: "bg-red-900/20 text-red-400 border-red-900/30" },
-};
+type Tab = "dashboard" | "leads" | "oportunidades" | "config" | "datos";
 
 const EMPTY_LEAD: Omit<AdminLead, "id" | "createdAt" | "updatedAt"> = {
   name: "",
@@ -25,35 +19,21 @@ const EMPTY_LEAD: Omit<AdminLead, "id" | "createdAt" | "updatedAt"> = {
   monthlyBill: 100000,
   priority: "ahorro",
   status: "nuevo",
-  notes: "",
 };
 
-interface LeadModalProps {
-  lead?: AdminLead;
+interface NewLeadModalProps {
+  defaultCommune?: string;
+  defaultRegion?: string;
   onSave: (data: Omit<AdminLead, "id" | "createdAt" | "updatedAt">) => void;
   onClose: () => void;
 }
 
-function LeadModal({ lead, onSave, onClose }: LeadModalProps) {
-  const [form, setForm] = useState<Omit<AdminLead, "id" | "createdAt" | "updatedAt">>(
-    lead
-      ? {
-          name: lead.name,
-          commune: lead.commune,
-          region: lead.region,
-          propertyType: lead.propertyType,
-          monthlyBill: lead.monthlyBill,
-          priority: lead.priority,
-          status: lead.status,
-          notes: lead.notes ?? "",
-          phone: lead.phone,
-          email: lead.email,
-          score: lead.score,
-          estimatedSaving: lead.estimatedSaving,
-          kit: lead.kit,
-        }
-      : EMPTY_LEAD
-  );
+function NewLeadModal({ defaultCommune, defaultRegion, onSave, onClose }: NewLeadModalProps) {
+  const [form, setForm] = useState<Omit<AdminLead, "id" | "createdAt" | "updatedAt">>({
+    ...EMPTY_LEAD,
+    commune: defaultCommune ?? "",
+    region: defaultRegion ?? "V",
+  });
 
   const set = <K extends keyof typeof form>(key: K, val: (typeof form)[K]) =>
     setForm((p) => ({ ...p, [key]: val }));
@@ -64,12 +44,14 @@ function LeadModal({ lead, onSave, onClose }: LeadModalProps) {
     onClose();
   };
 
+  const inp = "w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40";
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-10 w-full max-w-lg bg-slate-900 border border-slate-700/60 rounded-2xl p-6 overflow-y-auto max-h-[90vh]">
         <div className="flex items-center justify-between mb-5">
-          <h3 className="font-bold text-white">{lead ? "Editar lead" : "Nuevo lead"}</h3>
+          <h3 className="font-bold text-white">Nuevo lead</h3>
           <button type="button" onClick={onClose} className="text-slate-500 hover:text-slate-300 text-xl leading-none">×</button>
         </div>
 
@@ -77,96 +59,63 @@ function LeadModal({ lead, onSave, onClose }: LeadModalProps) {
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
               <label className="text-xs text-slate-400 block mb-1">Nombre *</label>
-              <input
-                type="text"
-                value={form.name}
-                onChange={(e) => set("name", e.target.value)}
-                required
-                className="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40"
-              />
+              <input type="text" required value={form.name} onChange={(e) => set("name", e.target.value)} className={inp} />
+            </div>
+            <div>
+              <label className="text-xs text-slate-400 block mb-1">Teléfono</label>
+              <input type="text" value={form.phone ?? ""} onChange={(e) => set("phone", e.target.value || undefined)} className={inp} />
+            </div>
+            <div>
+              <label className="text-xs text-slate-400 block mb-1">Email</label>
+              <input type="email" value={form.email ?? ""} onChange={(e) => set("email", e.target.value || undefined)} className={inp} />
             </div>
             <div>
               <label className="text-xs text-slate-400 block mb-1">Comuna</label>
-              <input
-                type="text"
-                value={form.commune}
-                onChange={(e) => set("commune", e.target.value)}
-                className="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40"
-              />
+              <input type="text" value={form.commune} onChange={(e) => set("commune", e.target.value)} className={inp} />
             </div>
             <div>
               <label className="text-xs text-slate-400 block mb-1">Región</label>
-              <select
-                value={form.region}
-                onChange={(e) => set("region", e.target.value)}
-                className="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40 appearance-none"
-              >
+              <select value={form.region} onChange={(e) => set("region", e.target.value)} className={inp + " appearance-none"}>
                 <option value="V" className="bg-slate-900">V Región</option>
                 <option value="RM" className="bg-slate-900">RM</option>
                 <option value="VI" className="bg-slate-900">VI Región</option>
               </select>
             </div>
             <div>
-              <label className="text-xs text-slate-400 block mb-1">Tipo</label>
-              <select
-                value={form.propertyType}
-                onChange={(e) => set("propertyType", e.target.value)}
-                className="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40 appearance-none"
-              >
-                <option value="hogar" className="bg-slate-900">Hogar</option>
-                <option value="parcela" className="bg-slate-900">Parcela</option>
-                <option value="pyme" className="bg-slate-900">PyME</option>
-                <option value="negocio" className="bg-slate-900">Negocio</option>
-                <option value="turismo" className="bg-slate-900">Turismo</option>
-                <option value="agricola" className="bg-slate-900">Agrícola</option>
+              <label className="text-xs text-slate-400 block mb-1">Tipo propiedad</label>
+              <select value={form.propertyType} onChange={(e) => set("propertyType", e.target.value)} className={inp + " appearance-none"}>
+                {["hogar","parcela","pyme","negocio","turismo","agricola"].map((t) => (
+                  <option key={t} value={t} className="bg-slate-900 capitalize">{t.charAt(0).toUpperCase() + t.slice(1)}</option>
+                ))}
               </select>
             </div>
             <div>
               <label className="text-xs text-slate-400 block mb-1">Cuenta mensual ($)</label>
-              <input
-                type="number"
-                value={form.monthlyBill}
-                onChange={(e) => set("monthlyBill", Number(e.target.value))}
-                className="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40"
-              />
+              <input type="number" value={form.monthlyBill} onChange={(e) => set("monthlyBill", Number(e.target.value))} className={inp} />
+            </div>
+            <div>
+              <label className="text-xs text-slate-400 block mb-1">Prioridad energética</label>
+              <select value={form.priority} onChange={(e) => set("priority", e.target.value)} className={inp + " appearance-none"}>
+                {["ahorro","respaldo","independencia","plusvalia"].map((p) => (
+                  <option key={p} value={p} className="bg-slate-900">{p}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="text-xs text-slate-400 block mb-1">Estado</label>
-              <select
-                value={form.status}
-                onChange={(e) => set("status", e.target.value as LeadStatus)}
-                className="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40 appearance-none"
-              >
+              <select value={form.status} onChange={(e) => set("status", e.target.value as LeadStatus)} className={inp + " appearance-none"}>
                 {(Object.keys(STATUS_CONFIG) as LeadStatus[]).map((s) => (
                   <option key={s} value={s} className="bg-slate-900">{STATUS_CONFIG[s].label}</option>
                 ))}
               </select>
             </div>
-            <div>
-              <label className="text-xs text-slate-400 block mb-1">Teléfono</label>
-              <input
-                type="text"
-                value={form.phone ?? ""}
-                onChange={(e) => set("phone", e.target.value || undefined)}
-                className="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-slate-400 block mb-1">Email</label>
-              <input
-                type="email"
-                value={form.email ?? ""}
-                onChange={(e) => set("email", e.target.value || undefined)}
-                className="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40"
-              />
-            </div>
             <div className="col-span-2">
-              <label className="text-xs text-slate-400 block mb-1">Notas internas</label>
+              <label className="text-xs text-slate-400 block mb-1">Notas</label>
               <textarea
                 value={form.notes ?? ""}
-                onChange={(e) => set("notes", e.target.value)}
-                rows={3}
-                className="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40 resize-none"
+                onChange={(e) => set("notes", e.target.value || undefined)}
+                rows={2}
+                className={inp + " resize-none"}
               />
             </div>
           </div>
@@ -190,36 +139,22 @@ interface AdminPanelProps {
 }
 
 export function AdminPanel({ onLogout }: AdminPanelProps) {
-  const logout = onLogout;
-  const { leads, addLead, updateLead, deleteLead, updateStatus, exportLeads, importLeads } = useLeads();
+  const { leads, addLead, updateLead, deleteLead, updateStatus, autoScore, exportLeads, importLeads } = useLeads();
   const [config, setConfig] = useCompanyConfig();
-  const [tab, setTab] = useState<Tab>("leads");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [filterRegion, setFilterRegion] = useState<string>("all");
-  const [editLead, setEditLead] = useState<AdminLead | undefined>();
+  const [tab, setTab] = useState<Tab>("dashboard");
+  const [drawerLead, setDrawerLead] = useState<AdminLead | null>(null);
   const [showNewLead, setShowNewLead] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [resetConfirm, setResetConfirm] = useState(false);
+  const [newLeadDefaults, setNewLeadDefaults] = useState<{ commune?: string; region?: string }>({});
   const [configSaved, setConfigSaved] = useState(false);
+  const [resetConfirm, setResetConfirm] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const filteredLeads = leads.filter((l) => {
-    if (filterStatus !== "all" && l.status !== filterStatus) return false;
-    if (filterRegion !== "all" && l.region !== filterRegion) return false;
-    return true;
-  });
-
-  const handleSaveLead = (data: Omit<AdminLead, "id" | "createdAt" | "updatedAt">) => {
-    if (editLead) {
-      updateLead(editLead.id, data);
-    } else {
-      addLead(data);
-    }
-    setEditLead(undefined);
-  };
+  // When drawer is open, keep synced lead
+  const openDrawerLead = drawerLead
+    ? (leads.find((l) => l.id === drawerLead.id) ?? drawerLead)
+    : null;
 
   const handleSaveConfig = () => {
-    // config is already bound to state; just show feedback
     setConfigSaved(true);
     setTimeout(() => setConfigSaved(false), 2000);
   };
@@ -246,25 +181,52 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
     URL.revokeObjectURL(url);
   };
 
+  const handleExportAll = () => {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      leads,
+      config,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `solergy_backup_${new Date().toISOString().split("T")[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleAddLeadForZone = (commune: string, region: string) => {
+    setNewLeadDefaults({ commune, region });
+    setShowNewLead(true);
+    setTab("leads");
+  };
+
+  const TAB_LABELS: Record<Tab, string> = {
+    dashboard: "Dashboard",
+    leads: "Leads",
+    oportunidades: "Oportunidades",
+    config: "Configuración",
+    datos: "Datos",
+  };
+
   return (
     <div className="min-h-screen bg-slate-950">
       {/* Header */}
-      <div className="border-b border-slate-800/60 bg-slate-900/50 backdrop-blur-sm sticky top-0 z-40">
+      <div className="border-b border-slate-800/60 bg-slate-900/50 backdrop-blur-sm sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-7 h-7 bg-amber-500/20 rounded-lg flex items-center justify-center">
-              <svg className="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
+              <Sun className="w-4 h-4 text-amber-400" />
             </div>
-            <span className="font-bold text-white text-sm">Solergy Admin</span>
-            <span className="text-slate-600 text-xs hidden sm:block">· Panel interno</span>
+            <span className="font-bold text-white text-sm">Panel Solergy</span>
+            <span className="text-slate-600 text-xs hidden sm:block">· Gestión comercial</span>
           </div>
           <div className="flex items-center gap-3">
             <a href="/" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Sitio público →</a>
             <button
               type="button"
-              onClick={logout}
+              onClick={onLogout}
               className="px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-white hover:border-slate-600 text-xs font-medium transition-all"
             >
               Cerrar sesión
@@ -276,19 +238,19 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
       {/* Tabs */}
       <div className="border-b border-slate-800/60 bg-slate-900/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex gap-1">
-            {(["leads", "config", "datos"] as Tab[]).map((t) => (
+          <div className="flex gap-1 overflow-x-auto scrollbar-hide">
+            {(Object.keys(TAB_LABELS) as Tab[]).map((t) => (
               <button
                 key={t}
                 type="button"
                 onClick={() => setTab(t)}
-                className={`px-5 py-3.5 text-sm font-medium border-b-2 transition-all capitalize ${
+                className={`shrink-0 px-4 py-3.5 text-sm font-medium border-b-2 transition-all whitespace-nowrap ${
                   tab === t
                     ? "border-amber-500 text-amber-400"
                     : "border-transparent text-slate-500 hover:text-slate-300"
                 }`}
               >
-                {t === "leads" ? "Leads" : t === "config" ? "Configuración" : "Datos"}
+                {TAB_LABELS[t]}
               </button>
             ))}
           </div>
@@ -297,130 +259,29 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
 
-        {/* ===== LEADS TAB ===== */}
-        {tab === "leads" && (
-          <div>
-            {/* Filter bar */}
-            <div className="flex flex-wrap gap-3 mb-5 items-center">
-              <button
-                type="button"
-                onClick={() => setShowNewLead(true)}
-                className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold text-sm rounded-xl transition-all"
-              >
-                + Nuevo lead
-              </button>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40 appearance-none"
-              >
-                <option value="all" className="bg-slate-900">Todos los estados</option>
-                {(Object.keys(STATUS_CONFIG) as LeadStatus[]).map((s) => (
-                  <option key={s} value={s} className="bg-slate-900">{STATUS_CONFIG[s].label}</option>
-                ))}
-              </select>
-              <select
-                value={filterRegion}
-                onChange={(e) => setFilterRegion(e.target.value)}
-                className="bg-slate-800/60 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40 appearance-none"
-              >
-                <option value="all" className="bg-slate-900">Todas las regiones</option>
-                <option value="V" className="bg-slate-900">V Región</option>
-                <option value="RM" className="bg-slate-900">RM</option>
-                <option value="VI" className="bg-slate-900">VI Región</option>
-              </select>
-              <span className="text-slate-500 text-xs ml-auto">{filteredLeads.length} leads</span>
-            </div>
-
-            {/* Table */}
-            <div className="overflow-x-auto rounded-2xl border border-slate-800/60">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-800/60 bg-slate-900/50">
-                    {["Nombre", "Comuna", "Tipo", "Cuenta", "Estado", "Fecha", "Acciones"].map((h) => (
-                      <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredLeads.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="px-4 py-8 text-center text-slate-600 text-sm">
-                        No hay leads con este filtro
-                      </td>
-                    </tr>
-                  )}
-                  {filteredLeads.map((lead) => (
-                    <tr key={lead.id} className="border-b border-slate-800/40 hover:bg-slate-800/20 transition-colors">
-                      <td className="px-4 py-3">
-                        <div className="font-medium text-white">{lead.name}</div>
-                        {lead.phone && <div className="text-xs text-slate-500">{lead.phone}</div>}
-                        {lead.email && <div className="text-xs text-slate-500">{lead.email}</div>}
-                        {lead.notes && (
-                          <div className="text-xs text-slate-600 mt-0.5 max-w-xs truncate">{lead.notes}</div>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-slate-400">{lead.commune}<br /><span className="text-xs text-slate-600">{lead.region}</span></td>
-                      <td className="px-4 py-3 text-slate-400 capitalize">{lead.propertyType}</td>
-                      <td className="px-4 py-3 text-slate-300">{formatCLP(lead.monthlyBill)}</td>
-                      <td className="px-4 py-3">
-                        <select
-                          value={lead.status}
-                          onChange={(e) => updateStatus(lead.id, e.target.value as LeadStatus)}
-                          className={`border rounded-lg px-2 py-1 text-xs font-medium appearance-none focus:outline-none cursor-pointer ${STATUS_CONFIG[lead.status].classes} bg-transparent`}
-                        >
-                          {(Object.keys(STATUS_CONFIG) as LeadStatus[]).map((s) => (
-                            <option key={s} value={s} className="bg-slate-900 text-white">{STATUS_CONFIG[s].label}</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="px-4 py-3 text-slate-500 text-xs whitespace-nowrap">
-                        {new Date(lead.createdAt).toLocaleDateString("es-CL")}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setEditLead(lead)}
-                            className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-all"
-                          >
-                            Editar
-                          </button>
-                          {deleteConfirm === lead.id ? (
-                            <div className="flex gap-1">
-                              <button
-                                type="button"
-                                onClick={() => { deleteLead(lead.id); setDeleteConfirm(null); }}
-                                className="px-2 py-1 rounded-lg bg-red-500/20 text-red-400 text-xs"
-                              >Confirmar</button>
-                              <button
-                                type="button"
-                                onClick={() => setDeleteConfirm(null)}
-                                className="px-2 py-1 rounded-lg bg-slate-800 text-slate-400 text-xs"
-                              >×</button>
-                            </div>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => setDeleteConfirm(lead.id)}
-                              className="px-2.5 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-medium transition-all"
-                            >
-                              Eliminar
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+        {/* ===== DASHBOARD ===== */}
+        {tab === "dashboard" && (
+          <AdminDashboard leads={leads} onGoToLeads={() => setTab("leads")} />
         )}
 
-        {/* ===== CONFIG TAB ===== */}
+        {/* ===== LEADS ===== */}
+        {tab === "leads" && (
+          <LeadTable
+            leads={leads}
+            onOpenDrawer={(lead) => setDrawerLead(lead)}
+            onUpdateStatus={(id, status) => updateStatus(id, status)}
+            onDeleteLead={(id) => deleteLead(id)}
+            onAutoScore={(id) => autoScore(id)}
+            onNewLead={() => { setNewLeadDefaults({}); setShowNewLead(true); }}
+          />
+        )}
+
+        {/* ===== OPORTUNIDADES ===== */}
+        {tab === "oportunidades" && (
+          <OpportunityCenter leads={leads} onAddLeadForZone={handleAddLeadForZone} />
+        )}
+
+        {/* ===== CONFIG ===== */}
         {tab === "config" && (
           <div className="max-w-2xl">
             <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/20 mb-6">
@@ -470,31 +331,32 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                 ))}
               </div>
 
-              <button
-                type="button"
-                onClick={handleSaveConfig}
-                className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold text-sm transition-all"
-              >
-                {configSaved ? "✓ Configuración guardada" : "Guardar configuración"}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setConfig(COMPANY_CONFIG_DEFAULTS)}
-                className="ml-3 px-5 py-3 rounded-xl border border-slate-700 text-slate-400 hover:text-white hover:border-slate-600 font-medium text-sm transition-all"
-              >
-                Restablecer valores por defecto
-              </button>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={handleSaveConfig}
+                  className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold text-sm transition-all"
+                >
+                  {configSaved ? "✓ Configuración guardada" : "Guardar configuración"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfig(COMPANY_CONFIG_DEFAULTS)}
+                  className="px-5 py-3 rounded-xl border border-slate-700 text-slate-400 hover:text-white hover:border-slate-600 font-medium text-sm transition-all"
+                >
+                  Restablecer valores por defecto
+                </button>
+              </div>
             </div>
           </div>
         )}
 
-        {/* ===== DATOS TAB ===== */}
+        {/* ===== DATOS ===== */}
         {tab === "datos" && (
           <div className="max-w-xl space-y-4">
             <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/50">
               <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-3">
-                Panel interno Solergy · Acceso restringido · Los datos se almacenan localmente en este navegador.
+                Los datos se almacenan localmente en este navegador.
               </p>
               <div className="space-y-3">
                 <button
@@ -518,6 +380,15 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
 
                 <button
                   type="button"
+                  onClick={handleExportAll}
+                  className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-amber-500/30 text-amber-400/80 text-sm font-medium transition-all flex items-center gap-3 px-4"
+                >
+                  <span>📦</span>
+                  <span>Exportar respaldo completo (leads + config)</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => fileRef.current?.click()}
                   className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-sm font-medium transition-all flex items-center gap-3 px-4"
                 >
@@ -534,12 +405,12 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
 
                 {resetConfirm ? (
                   <div className="p-4 rounded-xl border border-red-500/30 bg-red-500/5 space-y-3">
-                    <p className="text-red-300 text-sm font-medium">¿Confirmar restablecer datos de ejemplo?</p>
-                    <p className="text-slate-500 text-xs">Se eliminarán todos los leads actuales.</p>
+                    <p className="text-red-300 text-sm font-medium">¿Confirmar eliminación de todos los leads?</p>
+                    <p className="text-slate-500 text-xs">Esta acción no se puede deshacer.</p>
                     <div className="flex gap-3">
                       <button
                         type="button"
-                        onClick={() => { setResetConfirm(false); }}
+                        onClick={() => setResetConfirm(false)}
                         className="flex-1 py-2 rounded-xl border border-slate-700 text-slate-400 text-sm"
                       >
                         Cancelar
@@ -547,7 +418,6 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                       <button
                         type="button"
                         onClick={() => {
-                          // Clear leads
                           if (typeof window !== "undefined") {
                             localStorage.removeItem("solergy_leads");
                           }
@@ -565,8 +435,8 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                     onClick={() => setResetConfirm(true)}
                     className="w-full py-3 rounded-xl border border-red-500/20 text-red-400/70 text-sm font-medium transition-all flex items-center gap-3 px-4 hover:border-red-500/40 hover:text-red-400"
                   >
-                    <span>🔄</span>
-                    <span>Restablecer datos de ejemplo</span>
+                    <span>🗑️</span>
+                    <span>Eliminar todos los leads</span>
                   </button>
                 )}
               </div>
@@ -575,12 +445,21 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
         )}
       </div>
 
-      {/* Lead modals */}
-      {(showNewLead || editLead) && (
-        <LeadModal
-          lead={editLead}
-          onSave={handleSaveLead}
-          onClose={() => { setShowNewLead(false); setEditLead(undefined); }}
+      {/* Lead Drawer */}
+      {openDrawerLead && (
+        <LeadDrawer
+          lead={openDrawerLead}
+          onClose={() => setDrawerLead(null)}
+        />
+      )}
+
+      {/* New lead modal */}
+      {showNewLead && (
+        <NewLeadModal
+          defaultCommune={newLeadDefaults.commune}
+          defaultRegion={newLeadDefaults.region}
+          onSave={(data) => { addLead(data); }}
+          onClose={() => { setShowNewLead(false); setNewLeadDefaults({}); }}
         />
       )}
     </div>

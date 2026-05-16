@@ -1,6 +1,7 @@
 "use client";
 import { useCallback } from "react";
 import { useLocalStorage } from "@/lib/hooks/useLocalStorage";
+import { scoreLeadInput } from "@/lib/scoring";
 
 export type LeadStatus =
   | "nuevo"
@@ -28,6 +29,53 @@ export interface AdminLead {
   notes?: string;
   createdAt: string;
   updatedAt: string;
+
+  // Financial
+  estimatedAnnualSaving?: number;
+  roiEstimate?: string;
+  projectValue?: number;
+
+  // Scoring
+  scoreBreakdown?: {
+    consumo: number;
+    radiacion: number;
+    continuidad: number;
+    capacidadPago: number;
+    saturacion: number;
+  };
+  profileLabel?: string;
+
+  // Lead tracking
+  leadPriority?: "alta" | "media" | "baja";
+  nextAction?: string;
+  followUpDate?: string;
+  source?: string;
+
+  // Quotation
+  quotation?: {
+    proposalName?: string;
+    kitName?: string;
+    panelCount?: number;
+    batteryCount?: number;
+    inverterType?: string;
+    projectValue?: number;
+    paymentMethod?: string;
+    advanceAmount?: number;
+    balanceAmount?: number;
+    proposalValidity?: string;
+    observations?: string;
+    conditions?: string;
+    warranty?: string;
+    estimatedInstallTime?: string;
+    updatedAt?: string;
+  };
+
+  // Notes history
+  notesHistory?: Array<{
+    id: string;
+    text: string;
+    createdAt: string;
+  }>;
 }
 
 export function useLeads() {
@@ -111,6 +159,95 @@ export function useLeads() {
     [leads, setLeads]
   );
 
+  const addNote = useCallback(
+    (leadId: string, text: string) => {
+      const note = {
+        id: crypto.randomUUID(),
+        text,
+        createdAt: new Date().toISOString(),
+      };
+      setLeads(
+        leads.map((l) =>
+          l.id === leadId
+            ? {
+                ...l,
+                notesHistory: [note, ...(l.notesHistory ?? [])],
+                updatedAt: new Date().toISOString(),
+              }
+            : l
+        )
+      );
+    },
+    [leads, setLeads]
+  );
+
+  const deleteNote = useCallback(
+    (leadId: string, noteId: string) => {
+      setLeads(
+        leads.map((l) =>
+          l.id === leadId
+            ? {
+                ...l,
+                notesHistory: (l.notesHistory ?? []).filter((n) => n.id !== noteId),
+                updatedAt: new Date().toISOString(),
+              }
+            : l
+        )
+      );
+    },
+    [leads, setLeads]
+  );
+
+  const updateQuotation = useCallback(
+    (leadId: string, quotation: AdminLead["quotation"]) => {
+      setLeads(
+        leads.map((l) =>
+          l.id === leadId
+            ? {
+                ...l,
+                quotation: { ...quotation, updatedAt: new Date().toISOString() },
+                updatedAt: new Date().toISOString(),
+              }
+            : l
+        )
+      );
+    },
+    [leads, setLeads]
+  );
+
+  const autoScore = useCallback(
+    (leadId: string) => {
+      const lead = leads.find((l) => l.id === leadId);
+      if (!lead) return;
+      const result = scoreLeadInput({
+        monthlyBill: lead.monthlyBill,
+        region: lead.region,
+        commune: lead.commune,
+        propertyType: lead.propertyType,
+        nightConsumption: "medio",
+        hasPool: false,
+        hasWaterPump: false,
+        workFromHome: false,
+        priority: lead.priority || "ahorro",
+      });
+      setLeads(
+        leads.map((l) =>
+          l.id === leadId
+            ? {
+                ...l,
+                score: result.total,
+                scoreBreakdown: result.breakdown,
+                profileLabel: result.profileLabel,
+                leadPriority: result.priority,
+                updatedAt: new Date().toISOString(),
+              }
+            : l
+        )
+      );
+    },
+    [leads, setLeads]
+  );
+
   return {
     leads,
     setLeads,
@@ -122,5 +259,9 @@ export function useLeads() {
     filterByRegion,
     exportLeads,
     importLeads,
+    addNote,
+    deleteNote,
+    updateQuotation,
+    autoScore,
   };
 }
