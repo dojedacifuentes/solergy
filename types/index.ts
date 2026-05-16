@@ -20,6 +20,8 @@ export interface Lead {
   email?: string;
   createdAt: string;
   notes?: string;
+  score?: number;
+  profileLabel?: string;
 }
 
 export interface SimulatorInput {
@@ -33,14 +35,18 @@ export interface SimulatorInput {
   workFromHome: boolean;
   nightConsumption: NightConsumption;
   priority: Priority;
+  resilience?: boolean;
 }
 
 export interface SimulatorScenario {
   label: string;
   description: string;
+  coverageRange: [number, number];
   coveragePercent: number;
+  monthlySavingRange: [number, number];
   monthlySaving: number;
   yearlySaving: number;
+  roiRange: [number, number];
   roiYears: number;
   investmentMin: number;
   investmentMax: number;
@@ -48,6 +54,7 @@ export interface SimulatorScenario {
   panels: number;
   batteries: number;
   recommendation: string;
+  kitName: string;
 }
 
 export interface SimulatorResult {
@@ -56,6 +63,8 @@ export interface SimulatorResult {
   optimized: SimulatorScenario;
   habitImpact: string;
   systemRec: string;
+  zoneScore?: number;
+  zoneName?: string;
 }
 
 export interface CaseStudy {
@@ -110,4 +119,18 @@ export interface HabitScenario {
   timeNight: string;
   impactLabel: string;
   impactPercent: number;
+}
+
+export interface LeadScore {
+  total: number;
+  breakdown: {
+    consumo: number;
+    radiacion: number;
+    continuidad: number;
+    capacidadPago: number;
+    saturacion: number;
+  };
+  profileLabel: string;
+  priority: "alta" | "media" | "baja";
+  recommendation: string;
 }

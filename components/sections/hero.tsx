@@ -6,16 +6,14 @@ import { WHATSAPP_URL } from "@/lib/mock-data";
 export function Hero() {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
-      {/* Ambient background effects */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-amber-500/6 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-600/5 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-amber-500/3 rounded-full blur-[80px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-amber-500/3 rounded-full blur-[100px]" />
       </div>
 
-      {/* Grid pattern */}
       <div
-        className="absolute inset-0 opacity-[0.03]"
+        className="absolute inset-0 opacity-[0.025]"
         style={{
           backgroundImage: `linear-gradient(rgba(245,158,11,1) 1px, transparent 1px), linear-gradient(90deg, rgba(245,158,11,1) 1px, transparent 1px)`,
           backgroundSize: "60px 60px",
@@ -23,7 +21,6 @@ export function Hero() {
       />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        {/* Badge */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -31,35 +28,29 @@ export function Hero() {
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border-amber-500/20 text-sm text-amber-400 font-medium mb-8"
         >
           <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-          Plataforma de Independencia Energética · Chile
+          Independencia Energética Inteligente · V · VI · RM
         </motion.div>
 
-        {/* Headline */}
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.1 }}
-          className="text-4xl sm:text-5xl lg:text-7xl font-bold text-white leading-tight tracking-tight text-balance"
+          className="text-4xl sm:text-5xl lg:text-7xl font-bold text-white leading-tight tracking-tight"
         >
-          Tu cuenta eléctrica{" "}
-          <span className="gradient-text-solar">seguirá subiendo.</span>
-          <br />
-          ¿Cuánto podrías{" "}
-          <span className="gradient-text-solar">no pagar?</span>
+          Deja de pagar por{" "}
+          <span className="gradient-text-solar">energía que podrías generar.</span>
         </motion.h1>
 
-        {/* Subheadline */}
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.25 }}
           className="mt-6 text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed"
         >
-          Evalúa tu ahorro real, visualiza tu retorno de inversión y alcanza
-          la independencia energética. Para parcelas, hogares, negocios y turismo en Chile.
+          Solergy te muestra exactamente cuánto podrías ahorrar, en cuánto tiempo recuperas la inversión
+          y qué tan independiente puedes ser de la red. Sin sorpresas, sin letra chica.
         </motion.p>
 
-        {/* CTAs */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -67,30 +58,29 @@ export function Hero() {
           className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
         >
           <Link href="/simulador">
-            <button className="btn-solar text-base px-8 py-4 rounded-2xl solar-glow">
+            <button className="btn-solar text-base px-8 py-4 rounded-2xl solar-glow flex items-center gap-2">
               <SunIcon />
-              Calcular mi ahorro
+              Simular mi ahorro gratis
             </button>
           </Link>
           <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
-            <button className="btn-outline text-base px-8 py-4 rounded-2xl">
+            <button className="btn-outline text-base px-8 py-4 rounded-2xl flex items-center gap-2">
               <WhatsAppIcon />
               Hablar con un asesor
             </button>
           </a>
         </motion.div>
 
-        {/* Trust badges */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.6 }}
-          className="mt-14 flex flex-wrap items-center justify-center gap-6 text-sm text-slate-500"
+          className="mt-12 flex flex-wrap items-center justify-center gap-6 text-sm text-slate-500"
         >
           {[
             { icon: "⚡", label: "Sin pago hasta instalación confirmada" },
-            { icon: "🔋", label: "Garantía en equipos" },
-            { icon: "📍", label: "V · VI · RM" },
+            { icon: "🔋", label: "Garantía en equipos incluida" },
+            { icon: "📍", label: "Cobertura V · VI · RM" },
             { icon: "☀️", label: "+50 instalaciones exitosas" },
           ].map((item) => (
             <div key={item.label} className="flex items-center gap-2">
@@ -100,22 +90,21 @@ export function Hero() {
           ))}
         </motion.div>
 
-        {/* Hero visual */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1, delay: 0.5 }}
-          className="mt-16 relative mx-auto max-w-4xl"
+          transition={{ duration: 0.9, delay: 0.55 }}
+          className="mt-16 relative mx-auto max-w-3xl"
         >
           <div className="glass rounded-3xl p-6 solar-glow">
             <div className="grid grid-cols-3 gap-4">
-              <StatPill icon="💰" label="Ahorro estimado" value="70%" sub="de tu cuenta" color="amber" />
-              <StatPill icon="⚡" label="Retorno típico" value="4-6 años" sub="después, es tuyo" color="green" />
-              <StatPill icon="🔋" label="Autonomía" value="24h" sub="con respaldo" color="blue" />
+              <StatPill icon="💰" label="Ahorro promedio" value="70–85%" sub="de la cuenta mensual" color="amber" />
+              <StatPill icon="📅" label="Retorno típico" value="3.2–5 años" sub="después, energía gratis" color="green" />
+              <StatPill icon="🔋" label="Autonomía" value="24h" sub="con sistema de respaldo" color="blue" />
             </div>
             <div className="mt-4 pt-4 border-t border-slate-700/50 flex items-center justify-center gap-2 text-xs text-slate-500">
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-              Estimaciones basadas en consumo de referencia $100.000 CLP/mes · Kit base 6 paneles
+              Rangos de referencia para hogares con cuenta $80.000–$200.000 CLP/mes · Evalúa tu caso específico en el simulador
             </div>
           </div>
         </motion.div>
@@ -125,16 +114,12 @@ export function Hero() {
 }
 
 function StatPill({ icon, label, value, sub, color }: { icon: string; label: string; value: string; sub: string; color: string }) {
-  const colors: Record<string, string> = {
-    amber: "text-amber-400",
-    green: "text-green-400",
-    blue: "text-blue-400",
-  };
+  const colors: Record<string, string> = { amber: "text-amber-400", green: "text-green-400", blue: "text-blue-400" };
   return (
     <div className="glass-light rounded-2xl p-4 text-center">
       <div className="text-2xl mb-1">{icon}</div>
-      <div className={`text-2xl font-bold ${colors[color]}`}>{value}</div>
-      <div className="text-xs text-slate-300 font-medium">{label}</div>
+      <div className={`text-xl font-bold ${colors[color]} leading-tight`}>{value}</div>
+      <div className="text-xs text-slate-300 font-medium mt-1">{label}</div>
       <div className="text-xs text-slate-500 mt-0.5">{sub}</div>
     </div>
   );

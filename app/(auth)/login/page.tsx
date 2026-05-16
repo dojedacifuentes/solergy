@@ -18,19 +18,24 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 800));
+    await new Promise((r) => setTimeout(r, 700));
 
     if (email === DEMO_USER && password === DEMO_PASS) {
       router.push("/dashboard");
     } else {
-      setError("Credenciales incorrectas. Usa: admin@solergy.cl / demo123");
+      setError("Credenciales incorrectas. Por favor revisa tus datos.");
       setLoading(false);
     }
   };
 
+  const handleQuickAccess = async () => {
+    setLoading(true);
+    await new Promise((r) => setTimeout(r, 500));
+    router.push("/dashboard");
+  };
+
   return (
     <div className="w-full max-w-md">
-      {/* Ambient glow */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl" />
       </div>
@@ -45,7 +50,7 @@ export default function LoginPage() {
 
         <div className="glass rounded-3xl p-8 solar-glow">
           <h1 className="text-2xl font-bold text-white mb-2">Acceder</h1>
-          <p className="text-slate-400 text-sm mb-6">Demo exclusiva para equipo Solergy</p>
+          <p className="text-slate-400 text-sm mb-6">Acceso exclusivo para el equipo Solergy</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -54,7 +59,7 @@ export default function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@solergy.cl"
+                placeholder="tu@solergy.cl"
                 className="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/40 transition-all"
                 required
               />
@@ -95,15 +100,14 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Demo hint */}
-          <div className="mt-5 p-4 rounded-xl bg-amber-500/5 border border-amber-500/15">
-            <p className="text-amber-300/80 text-xs font-medium mb-1">Credenciales de demo:</p>
-            <p className="text-slate-400 text-xs">
-              <strong className="text-slate-300">Email:</strong> admin@solergy.cl
-            </p>
-            <p className="text-slate-400 text-xs">
-              <strong className="text-slate-300">Contraseña:</strong> demo123
-            </p>
+          <div className="mt-4 pt-4 border-t border-slate-800">
+            <button
+              onClick={handleQuickAccess}
+              disabled={loading}
+              className="w-full btn-outline py-3 rounded-xl text-sm font-medium disabled:opacity-50"
+            >
+              Acceso rápido a demo →
+            </button>
           </div>
         </div>
 

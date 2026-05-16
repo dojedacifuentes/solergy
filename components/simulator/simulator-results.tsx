@@ -16,15 +16,15 @@ interface Props {
 export function SimulatorResults({ result, input, onReset }: Props) {
   const { conservative, smart, optimized } = result;
   const scenarios = [
-    { data: conservative, color: "border-blue-500/30 bg-blue-500/5", accent: "text-blue-400", badge: "bg-blue-500/20 text-blue-300" },
-    { data: smart, color: "border-amber-500/40 bg-amber-500/8", accent: "text-amber-400", badge: "bg-amber-500/20 text-amber-300", recommended: true },
-    { data: optimized, color: "border-green-500/30 bg-green-500/5", accent: "text-green-400", badge: "bg-green-500/20 text-green-300" },
+    { data: conservative, color: "border-blue-500/30 bg-blue-500/5", accent: "text-blue-400", badge: "bg-blue-500/20 text-blue-300 border-blue-500/30" },
+    { data: smart, color: "border-amber-500/40 bg-amber-500/8", accent: "text-amber-400", badge: "bg-amber-500/20 text-amber-300 border-amber-500/30", recommended: true },
+    { data: optimized, color: "border-green-500/30 bg-green-500/5", accent: "text-green-400", badge: "bg-green-500/20 text-green-300 border-green-500/30" },
   ];
 
   const chartData = scenarios.map((s) => ({
     name: s.data.label,
-    "Ahorro/año": s.data.yearlySaving / 1000,
-    "Inversión": s.data.investmentMin / 1000,
+    "Ahorro/año": Math.round(s.data.yearlySaving / 1000),
+    "Inversión": Math.round(s.data.investmentMin / 1000),
   }));
 
   return (
@@ -38,17 +38,20 @@ export function SimulatorResults({ result, input, onReset }: Props) {
         <div>
           <h2 className="text-2xl font-bold text-white">Tu análisis energético</h2>
           <p className="text-slate-400 text-sm mt-1">
-            Cuenta: {formatCLP(input.monthlyBill)}/mes · {input.people} personas
+            Cuenta: {formatCLP(input.monthlyBill)}/mes · {input.commune}
+            {result.zoneScore && (
+              <span className="ml-2 text-amber-400 font-medium">· Puntaje solar: {result.zoneScore}/100</span>
+            )}
           </p>
         </div>
-        <button onClick={onReset} className="text-sm text-slate-500 hover:text-slate-300 transition-colors flex items-center gap-1">
+        <button onClick={onReset} className="text-sm text-slate-500 hover:text-slate-300 transition-colors">
           ← Modificar
         </button>
       </div>
 
       {/* System recommendation */}
       <div className="glass rounded-2xl p-5 border-amber-500/20 bg-amber-500/5">
-        <p className="text-amber-300 text-sm font-medium">{result.systemRec}</p>
+        <p className="text-amber-300 text-sm font-medium leading-relaxed">{result.systemRec}</p>
       </div>
 
       {/* Scenarios */}
@@ -63,24 +66,32 @@ export function SimulatorResults({ result, input, onReset }: Props) {
           >
             {s.recommended && (
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <span className="bg-amber-500 text-slate-900 text-xs font-bold px-3 py-1 rounded-full">RECOMENDADO</span>
+                <span className="bg-amber-500 text-slate-900 text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">RECOMENDADO</span>
               </div>
             )}
 
-            <div className="text-center mb-5">
+            <div className="text-center mb-4">
               <h3 className="font-bold text-white text-lg">{s.data.label}</h3>
-              <p className="text-slate-400 text-xs mt-1">{s.data.description}</p>
+              <div className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border mt-1 ${s.badge}`}>
+                {s.data.kitName}
+              </div>
+              <p className="text-slate-400 text-xs mt-2">{s.data.description}</p>
             </div>
 
             <div className="text-center mb-5">
-              <div className={`text-4xl font-bold ${s.accent}`}>{formatCLP(s.data.monthlySaving)}</div>
+              <div className={`text-3xl font-bold ${s.accent}`}>{formatCLP(s.data.monthlySaving)}</div>
               <div className="text-slate-500 text-xs">ahorro estimado/mes</div>
+              <div className="text-slate-600 text-xs mt-0.5">
+                rango: {formatCLP(s.data.monthlySavingRange[0])} – {formatCLP(s.data.monthlySavingRange[1])}
+              </div>
             </div>
 
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-slate-400">Cobertura</span>
-                <span className="text-white font-medium">{s.data.coveragePercent}%</span>
+                <span className="text-slate-400">Cobertura solar</span>
+                <span className="text-white font-medium">
+                  {s.data.coverageRange[0]}–{s.data.coverageRange[1]}%
+                </span>
               </div>
               <Progress value={s.data.coveragePercent} color={i === 0 ? "blue" : i === 1 ? "solar" : "green"} className="h-2" />
 
@@ -90,19 +101,24 @@ export function SimulatorResults({ result, input, onReset }: Props) {
                   <span className="text-white font-medium">{formatCLP(s.data.yearlySaving)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Inversión estimada</span>
-                  <span className="text-white font-medium">{formatCLP(s.data.investmentMin)} – {formatCLP(s.data.investmentMax)}</span>
+                  <span className="text-slate-400">Inversión referencial</span>
+                  <span className="text-white font-medium text-right text-xs leading-snug">
+                    {formatCLP(s.data.investmentMin)}<br />
+                    <span className="text-slate-500">hasta {formatCLP(s.data.investmentMax)}</span>
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Retorno en</span>
-                  <span className={`font-bold ${s.accent}`}>{s.data.roiYears} años</span>
+                  <span className="text-slate-400">Retorno estimado</span>
+                  <span className={`font-bold ${s.accent}`}>
+                    {s.data.roiRange[0]}–{s.data.roiRange[1]} años
+                  </span>
                 </div>
               </div>
             </div>
 
             <div className="mt-4 pt-4 border-t border-slate-700/50 space-y-1 text-xs text-slate-500">
-              <div>⚙️ {s.data.panels} paneles · {s.data.batteries} baterías</div>
-              <div className="text-slate-600">{s.data.recommendation}</div>
+              <div>⚙️ {s.data.panels} paneles · {s.data.batteries} batería{s.data.batteries !== 1 ? "s" : ""}</div>
+              <div className="text-slate-600 leading-relaxed">{s.data.recommendation}</div>
             </div>
           </motion.div>
         ))}
@@ -124,7 +140,7 @@ export function SimulatorResults({ result, input, onReset }: Props) {
             <Bar dataKey="Inversión" fill="#3b82f6" radius={[6, 6, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
-        <p className="text-xs text-slate-600 mt-2">Valores en miles de pesos CLP. Estimaciones de referencia.</p>
+        <p className="text-xs text-slate-600 mt-2">Valores en miles de pesos CLP. Estimaciones de referencia — el valor real depende de evaluación técnica presencial.</p>
       </div>
 
       {/* Habit impact */}

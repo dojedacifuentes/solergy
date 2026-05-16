@@ -4,33 +4,14 @@ import { motion } from "framer-motion";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import type { SimulatorInput, Region, PropertyType, Priority, NightConsumption } from "@/types";
+import { solarZones } from "@/lib/data/mock-zones";
 
-const COMMUNES: Record<Region, { value: string; label: string }[]> = {
-  V: [
-    { value: "limache", label: "Limache" },
-    { value: "olmue", label: "Olmué" },
-    { value: "casablanca", label: "Casablanca" },
-    { value: "algarrobo", label: "Algarrobo" },
-    { value: "vina_del_mar", label: "Viña del Mar" },
-    { value: "quilpue", label: "Quilpué" },
-    { value: "santo_domingo", label: "Santo Domingo" },
-  ],
-  VI: [
-    { value: "rancagua", label: "Rancagua" },
-    { value: "machali", label: "Machalí" },
-    { value: "requinoa", label: "Requínoa" },
-    { value: "graneros", label: "Graneros" },
-  ],
-  RM: [
-    { value: "maipu", label: "Maipú" },
-    { value: "chicureo", label: "Chicureo" },
-    { value: "colina", label: "Colina" },
-    { value: "lampa", label: "Lampa" },
-    { value: "buin", label: "Buín" },
-    { value: "peñaflor", label: "Peñaflor" },
-    { value: "talagante", label: "Talagante" },
-  ],
-};
+function getCommuneOptions(region: Region) {
+  const zones = solarZones
+    .filter((z) => z.region === region)
+    .sort((a, b) => b.solarScore - a.solarScore);
+  return zones.map((z) => ({ value: z.name, label: z.name }));
+}
 
 interface Props {
   onResult: (input: SimulatorInput) => void;
@@ -38,7 +19,7 @@ interface Props {
 
 export function SimulatorForm({ onResult }: Props) {
   const [region, setRegion] = useState<Region>("V");
-  const [commune, setCommune] = useState("limache");
+  const [commune, setCommune] = useState("Casablanca");
   const [propertyType, setPropertyType] = useState<PropertyType>("hogar");
   const [monthlyBill, setMonthlyBill] = useState(100000);
   const [people, setPeople] = useState(4);
@@ -47,29 +28,34 @@ export function SimulatorForm({ onResult }: Props) {
   const [workFromHome, setWorkFromHome] = useState(false);
   const [nightConsumption, setNightConsumption] = useState<NightConsumption>("medio");
   const [priority, setPriority] = useState<Priority>("ahorro");
+  const [resilience, setResilience] = useState(false);
+
+  const handleRegionChange = (r: Region) => {
+    setRegion(r);
+    const opts = getCommuneOptions(r);
+    setCommune(opts[0]?.value ?? "");
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onResult({ region, commune, propertyType, monthlyBill, people, hasPool, hasWaterPump, workFromHome, nightConsumption, priority });
+    onResult({ region, commune, propertyType, monthlyBill, people, hasPool, hasWaterPump, workFromHome, nightConsumption, priority, resilience });
   };
+
+  const communeOptions = getCommuneOptions(region);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Section 1: Location */}
+      {/* Location */}
       <div>
-        <h3 className="text-sm font-semibold text-amber-400 uppercase tracking-widest mb-4">📍 Ubicación</h3>
+        <h3 className="text-xs font-bold text-amber-400 uppercase tracking-widest mb-4">📍 Ubicación</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Select
             label="Región"
             value={region}
-            onChange={(e) => {
-              const r = e.target.value as Region;
-              setRegion(r);
-              setCommune(COMMUNES[r][0].value);
-            }}
+            onChange={(e) => handleRegionChange(e.target.value as Region)}
             options={[
-              { value: "V", label: "V Región" },
-              { value: "VI", label: "VI Región" },
+              { value: "V", label: "V Región — Valparaíso" },
+              { value: "VI", label: "VI Región — O'Higgins" },
               { value: "RM", label: "Región Metropolitana" },
             ]}
           />
@@ -77,16 +63,16 @@ export function SimulatorForm({ onResult }: Props) {
             label="Comuna"
             value={commune}
             onChange={(e) => setCommune(e.target.value)}
-            options={COMMUNES[region]}
+            options={communeOptions}
           />
         </div>
       </div>
 
-      {/* Section 2: Property */}
+      {/* Property */}
       <div>
-        <h3 className="text-sm font-semibold text-amber-400 uppercase tracking-widest mb-4">🏠 Tu propiedad</h3>
+        <h3 className="text-xs font-bold text-amber-400 uppercase tracking-widest mb-4">🏠 Tipo de propiedad</h3>
         <Select
-          label="Tipo de propiedad"
+          label="Tipo"
           value={propertyType}
           onChange={(e) => setPropertyType(e.target.value as PropertyType)}
           options={[
@@ -100,17 +86,15 @@ export function SimulatorForm({ onResult }: Props) {
         />
       </div>
 
-      {/* Section 3: Consumption */}
+      {/* Consumption */}
       <div>
-        <h3 className="text-sm font-semibold text-amber-400 uppercase tracking-widest mb-4">⚡ Consumo</h3>
-        <div className="space-y-4">
+        <h3 className="text-xs font-bold text-amber-400 uppercase tracking-widest mb-4">⚡ Consumo</h3>
+        <div className="space-y-5">
           <div>
-            <label className="text-sm font-medium text-slate-300 block mb-2">
-              Cuenta eléctrica mensual
-              <span className="ml-2 text-amber-400 font-bold">
-                ${monthlyBill.toLocaleString("es-CL")}
-              </span>
-            </label>
+            <div className="flex justify-between items-baseline mb-2">
+              <label className="text-sm font-medium text-slate-300">Cuenta eléctrica mensual</label>
+              <span className="text-amber-400 font-bold text-base">${monthlyBill.toLocaleString("es-CL")}</span>
+            </div>
             <input
               type="range"
               min={30000}
@@ -120,20 +104,21 @@ export function SimulatorForm({ onResult }: Props) {
               onChange={(e) => setMonthlyBill(Number(e.target.value))}
               className="w-full accent-amber-400 h-2 rounded-full bg-slate-700 cursor-pointer"
             />
-            <div className="flex justify-between text-xs text-slate-600 mt-1">
+            <div className="flex justify-between text-xs text-slate-600 mt-1.5">
               <span>$30.000</span>
               <span>$800.000+</span>
             </div>
           </div>
 
           <div>
-            <label className="text-sm font-medium text-slate-300 block mb-2">
-              Personas en el hogar: <span className="text-amber-400 font-bold">{people}</span>
-            </label>
+            <div className="flex justify-between items-baseline mb-2">
+              <label className="text-sm font-medium text-slate-300">Personas en el hogar</label>
+              <span className="text-amber-400 font-bold">{people}</span>
+            </div>
             <input
               type="range"
               min={1}
-              max={12}
+              max={20}
               value={people}
               onChange={(e) => setPeople(Number(e.target.value))}
               className="w-full accent-amber-400 h-2 rounded-full bg-slate-700 cursor-pointer"
@@ -142,27 +127,30 @@ export function SimulatorForm({ onResult }: Props) {
         </div>
       </div>
 
-      {/* Section 4: Habits */}
+      {/* Habits */}
       <div>
-        <h3 className="text-sm font-semibold text-amber-400 uppercase tracking-widest mb-4">🔌 Hábitos y equipos</h3>
-        <div className="space-y-3">
+        <h3 className="text-xs font-bold text-amber-400 uppercase tracking-widest mb-4">🔌 Hábitos y equipos</h3>
+        <div className="space-y-2.5">
           {[
-            { key: "hasPool", label: "🏊 Tiene piscina", state: hasPool, set: setHasPool },
-            { key: "hasWaterPump", label: "💧 Bomba de agua / riego", state: hasWaterPump, set: setHasWaterPump },
-            { key: "workFromHome", label: "💻 Teletrabaja desde casa", state: workFromHome, set: setWorkFromHome },
+            { key: "hasPool", label: "🏊 Tiene piscina", desc: "Bomba de piscina activa", state: hasPool, set: setHasPool },
+            { key: "hasWaterPump", label: "💧 Bomba de agua / riego", desc: "Sistema de riego o bomba", state: hasWaterPump, set: setHasWaterPump },
+            { key: "workFromHome", label: "💻 Teletrabaja desde casa", desc: "Equipos encendidos de día", state: workFromHome, set: setWorkFromHome },
           ].map((item) => (
             <button
               key={item.key}
               type="button"
               onClick={() => item.set(!item.state)}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all duration-200 text-sm font-medium ${
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all text-sm ${
                 item.state
                   ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
-                  : "bg-slate-800/40 border-slate-700/50 text-slate-400 hover:border-slate-600"
+                  : "bg-slate-800/40 border-slate-700/50 text-slate-400 hover:border-slate-600 hover:text-slate-300"
               }`}
             >
-              <span>{item.label}</span>
-              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${item.state ? "bg-amber-400 border-amber-400" : "border-slate-600"}`}>
+              <div className="text-left">
+                <div className="font-medium">{item.label}</div>
+                <div className="text-xs text-slate-600 mt-0.5">{item.desc}</div>
+              </div>
+              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ml-3 transition-all ${item.state ? "bg-amber-400 border-amber-400" : "border-slate-600"}`}>
                 {item.state && <div className="w-2 h-2 rounded-full bg-slate-900" />}
               </div>
             </button>
@@ -173,21 +161,21 @@ export function SimulatorForm({ onResult }: Props) {
             value={nightConsumption}
             onChange={(e) => setNightConsumption(e.target.value as NightConsumption)}
             options={[
-              { value: "bajo", label: "Bajo — duermo temprano, poco uso nocturno" },
+              { value: "bajo", label: "Bajo — poco uso nocturno" },
               { value: "medio", label: "Medio — uso normal de noche" },
-              { value: "alto", label: "Alto — trabajo de noche, mucho uso nocturno" },
+              { value: "alto", label: "Alto — mucho uso nocturno" },
             ]}
           />
         </div>
       </div>
 
-      {/* Section 5: Priority */}
+      {/* Priority */}
       <div>
-        <h3 className="text-sm font-semibold text-amber-400 uppercase tracking-widest mb-4">🎯 Prioridad</h3>
+        <h3 className="text-xs font-bold text-amber-400 uppercase tracking-widest mb-4">🎯 Prioridad</h3>
         <div className="grid grid-cols-2 gap-3">
           {[
-            { value: "ahorro", label: "💰 Máximo ahorro", desc: "Reducir cuenta" },
-            { value: "respaldo", label: "🔋 Respaldo", desc: "Cero cortes" },
+            { value: "ahorro", label: "💰 Máximo ahorro", desc: "Reducir cuenta mensual" },
+            { value: "respaldo", label: "🔋 Respaldo", desc: "Cero cortes eléctricos" },
             { value: "independencia", label: "⚡ Independencia", desc: "Salir de la red" },
             { value: "plusvalia", label: "🏠 Plusvalía", desc: "Valorizar propiedad" },
           ].map((p) => (
@@ -195,7 +183,7 @@ export function SimulatorForm({ onResult }: Props) {
               key={p.value}
               type="button"
               onClick={() => setPriority(p.value as Priority)}
-              className={`p-3 rounded-xl border text-left transition-all duration-200 ${
+              className={`p-3 rounded-xl border text-left transition-all ${
                 priority === p.value
                   ? "bg-amber-500/10 border-amber-500/40 text-amber-300"
                   : "bg-slate-800/30 border-slate-700/50 text-slate-400 hover:border-slate-600"
@@ -208,8 +196,29 @@ export function SimulatorForm({ onResult }: Props) {
         </div>
       </div>
 
+      {/* Resilience mode */}
+      <div>
+        <button
+          type="button"
+          onClick={() => setResilience(!resilience)}
+          className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl border transition-all text-sm ${
+            resilience
+              ? "bg-blue-500/10 border-blue-500/30 text-blue-300"
+              : "bg-slate-800/40 border-slate-700/50 text-slate-400 hover:border-slate-600"
+          }`}
+        >
+          <div className="text-left">
+            <div className="font-medium">🛡️ Modo resiliencia</div>
+            <div className="text-xs text-slate-500 mt-0.5">Dimensionar con batería de respaldo en todos los escenarios</div>
+          </div>
+          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ml-3 transition-all ${resilience ? "bg-blue-400 border-blue-400" : "border-slate-600"}`}>
+            {resilience && <div className="w-2 h-2 rounded-full bg-slate-900" />}
+          </div>
+        </button>
+      </div>
+
       <Button type="submit" size="lg" className="w-full text-base py-4 rounded-2xl">
-        ☀️ Calcular mi escenario
+        ☀️ Calcular mi escenario energético
       </Button>
     </form>
   );
