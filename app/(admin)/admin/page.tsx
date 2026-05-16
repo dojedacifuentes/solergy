@@ -4,6 +4,8 @@ import { AdminLogin } from "@/components/admin/AdminLogin";
 import { AdminPanel } from "@/components/admin/AdminPanel";
 
 export default function AdminPage() {
-  const { isAuthenticated } = useAdminSession();
-  return isAuthenticated ? <AdminPanel /> : <AdminLogin />;
+  const { isAuthenticated, login, logout } = useAdminSession();
+  return isAuthenticated
+    ? <AdminPanel onLogout={logout} />
+    : <AdminLogin onLogin={login} />;
 }

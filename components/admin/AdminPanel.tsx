@@ -1,6 +1,5 @@
 "use client";
 import { useState, useRef } from "react";
-import { useAdminSession } from "@/lib/hooks/useAdminSession";
 import { useLeads, type AdminLead, type LeadStatus } from "@/lib/hooks/useLeads";
 import { useCompanyConfig } from "@/lib/hooks/useCompanyConfig";
 import { COMPANY_CONFIG_DEFAULTS } from "@/lib/config";
@@ -186,8 +185,12 @@ function LeadModal({ lead, onSave, onClose }: LeadModalProps) {
   );
 }
 
-export function AdminPanel() {
-  const { logout } = useAdminSession();
+interface AdminPanelProps {
+  onLogout: () => void;
+}
+
+export function AdminPanel({ onLogout }: AdminPanelProps) {
+  const logout = onLogout;
   const { leads, addLead, updateLead, deleteLead, updateStatus, exportLeads, importLeads } = useLeads();
   const [config, setConfig] = useCompanyConfig();
   const [tab, setTab] = useState<Tab>("leads");

@@ -1,9 +1,11 @@
 "use client";
 import { useState } from "react";
-import { useAdminSession } from "@/lib/hooks/useAdminSession";
 
-export function AdminLogin() {
-  const { login } = useAdminSession();
+interface Props {
+  onLogin: (user: string, pass: string) => boolean;
+}
+
+export function AdminLogin({ onLogin }: Props) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
@@ -15,7 +17,7 @@ export function AdminLogin() {
     setError("");
     setLoading(true);
     await new Promise((r) => setTimeout(r, 400));
-    const ok = login(username, password);
+    const ok = onLogin(username, password);
     if (!ok) {
       setError("Credenciales incorrectas");
     }
